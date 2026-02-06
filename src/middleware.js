@@ -19,7 +19,7 @@ export function middleware(request) {
 
   // 2. If trying to access auth routes (login/signup) WITH token -> Redirect to dashboard
   if (isAuthRoute && token) {
-    return redirect("/dashboard");
+    return NextResponse.next();
   }
 
   return NextResponse.next();
@@ -28,6 +28,7 @@ export function middleware(request) {
 export const config = {
   matcher: [
     "/dashboard/:path*", 
+    "/admin/:path*",
     "/login", 
     "/signup"
   ],

@@ -23,7 +23,17 @@ export default function LoginPage() {
     try {
       await loginUser(form);
       login({});
-      router.push("/dashboard");
+      const res = await fetch("http://localhost:5000/api/auth/me", {
+  credentials: "include",
+});
+const data = await res.json();
+
+if (data.role === "ADMIN") {
+  router.replace("/admin");
+} else {
+  router.replace("/dashboard");
+}
+
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     } finally {

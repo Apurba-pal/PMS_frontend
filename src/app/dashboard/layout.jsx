@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { logoutUser } from "@/services/authService";
 import useAuthStore from "@/store/authStore";
 import {
@@ -16,6 +17,34 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuthStore();
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    const checkPlayer = async () => {
+      const res = await fetch(
+        "http://localhost:5000/api/auth/me",
+        { credentials: "include" }
+      );
+
+      if (!res.ok) {
+        router.replace("/login");
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.role !== "PLAYER") {
+        router.replace("/admin");
+        return;
+      }
+
+      setAllowed(true);
+    };
+
+    checkPlayer();
+  }, []);
+
+  if (!allowed) return null;
 
   const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
