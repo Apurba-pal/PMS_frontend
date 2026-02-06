@@ -1,6 +1,25 @@
+"use client";
+
 import { Users, Trophy, UserCog } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardHome() {
+  const router = useRouter();
+  useEffect(() => {
+    const checkAuth = async () => {
+      const res = await fetch(
+        "http://localhost:5000/api/auth/me",
+        { credentials: "include" }
+      );
+
+      if (!res.ok) {
+        router.replace("/login");
+      }
+    };
+    checkAuth();
+  }, []);
+
   const cards = [
     { title: "Create Squad", icon: Users },
     { title: "Join Tournament", icon: Trophy },
