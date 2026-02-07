@@ -161,12 +161,12 @@ export default function PlayerProfilePage() {
 
           {profile.previousSquads?.length ? (
             <ul className="space-y-2 text-sm text-white">
-              {profile.previousSquads.map((squad, i) => (
+              {profile.previousSquads.map((squad) => (
                 <li
-                  key={i}
+                  key={squad._id}
                   className="rounded-md bg-black/40 px-3 py-2"
                 >
-                  {squad}
+                  {squad.squadName}
                 </li>
               ))}
             </ul>
@@ -176,6 +176,7 @@ export default function PlayerProfilePage() {
             </p>
           )}
         </div>
+
 
         {/* QR */}
         <div className="rounded-xl bg-zinc-900/60 border border-yellow-400/10 p-6 flex flex-col items-center justify-center gap-3">
