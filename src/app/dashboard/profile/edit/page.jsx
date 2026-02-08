@@ -187,7 +187,7 @@ export default function EditPlayerProfile() {
             <Button
               type="button"
               variant="outline"
-              className="border-zinc-600 text-zinc-300"
+              className="border-yellow-600 text-yellow-300 bg-transparent hover:bg-amber-600"
               onClick={() => router.back()}
             >
               Cancel
