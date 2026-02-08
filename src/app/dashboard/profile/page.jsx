@@ -122,7 +122,7 @@ export default function PlayerProfilePage() {
         <Stat label="Status" value={profile.playerStatus} />
         <Stat
           label="Current Squad"
-          value={profile.currentSquad?.name || "—"}
+          value={profile.currentSquad?.squadName  || "—"}
         />
       </div>
 
