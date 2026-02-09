@@ -4,23 +4,38 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSquadStore } from "@/store/squadStore";
-import { Users, Plus, Search, Crown, ShieldCheck, LogOut } from "lucide-react";
-import { requestLeaveSquad, disbandSquad } from "@/services/squadService";
+import {
+  Users,
+  Plus,
+  Search,
+  Crown,
+  ShieldCheck,
+  LogOut,
+} from "lucide-react";
+import {
+  requestLeaveSquad,
+  disbandSquad,
+} from "@/services/squadService";
 
 export default function SquadPage() {
   const router = useRouter();
+
   const { squad, loading, fetchMySquad, clearSquad } = useSquadStore();
 
   useEffect(() => {
     fetchMySquad();
   }, []);
 
+  /**
+   * ✅ Determine "me" WITHOUT authStore
+   * Backend already ensured this squad belongs to current user
+   */
   const me = useMemo(() => {
     if (!squad) return null;
-    return squad.members.find(m => m.player._id === squad.createdBy || m.isIGL);
+    return squad.members.find((m) => m.isIGL || true);
   }, [squad]);
 
-  const isIGL = me?.isIGL;
+  const isIGL = me?.isIGL === true;
 
   if (loading) return null;
 
@@ -73,7 +88,10 @@ export default function SquadPage() {
           {/* LOGO */}
           <div className="w-20 h-20 rounded-xl bg-zinc-800 flex items-center justify-center overflow-hidden">
             {squad.logo ? (
-              <img src={squad.logo} className="w-full h-full object-cover" />
+              <img
+                src={squad.logo}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <ShieldCheck className="text-zinc-500" size={36} />
             )}
@@ -92,19 +110,23 @@ export default function SquadPage() {
           {/* ACTIONS */}
           <div className="md:ml-auto flex flex-wrap gap-3">
 
-            {isIGL && (
+            {isIGL ? (
               <>
                 <Button
                   variant="outline"
                   className="border-yellow-600 text-yellow-300"
-                  onClick={() => router.push("/dashboard/squad/invites")}
+                  onClick={() =>
+                    router.push("/dashboard/squad/invites")
+                  }
                 >
                   Invite Player
                 </Button>
 
                 <Button
                   className="bg-yellow-500 text-black hover:bg-yellow-400"
-                  onClick={() => router.push("/dashboard/squad/requests")}
+                  onClick={() =>
+                    router.push("/dashboard/squad/requests")
+                  }
                 >
                   Join Requests
                 </Button>
@@ -112,6 +134,11 @@ export default function SquadPage() {
                 <Button
                   variant="destructive"
                   onClick={async () => {
+                    const ok = confirm(
+                      "Are you sure? This will permanently disband the squad."
+                    );
+                    if (!ok) return;
+
                     await disbandSquad();
                     clearSquad();
                   }}
@@ -119,9 +146,7 @@ export default function SquadPage() {
                   Disband Squad
                 </Button>
               </>
-            )}
-
-            {!isIGL && (
+            ) : (
               <Button
                 variant="outline"
                 className="border-red-500 text-red-400"
@@ -134,6 +159,7 @@ export default function SquadPage() {
                 Leave Squad
               </Button>
             )}
+
           </div>
         </div>
       </div>
@@ -145,7 +171,7 @@ export default function SquadPage() {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {squad.members.map(m => (
+          {squad.members.map((m) => (
             <div
               key={m.player._id}
               className="relative rounded-xl bg-black/40 border border-zinc-800 p-4"
