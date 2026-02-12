@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSquadStore } from "@/store/squadStore";
-import useAuthStore from "@/store/authStore";
 import {
   Users,
   Plus,
@@ -21,20 +20,16 @@ import {
 export default function SquadPage() {
   const router = useRouter();
   const { squad, loading, fetchMySquad, clearSquad } = useSquadStore();
-  const { user } = useAuthStore();
 
   useEffect(() => {
     fetchMySquad();
   }, []);
 
-  const me = useMemo(() => {
-    if (!squad || !user) return null;
-    return squad.members.find(
-      (m) => m.player._id === user._id
-    );
-  }, [squad, user]);
-
-  const isIGL = me?.isIGL;
+  // ✅ Determine IGL directly from squad
+  const isIGL =
+    squad?.members?.length === 1
+      ? squad.members[0].isIGL === true
+      : squad?.members?.some((m) => m.isIGL === true);
 
   if (loading) return null;
 
