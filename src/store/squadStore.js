@@ -8,7 +8,7 @@ export const useSquadStore = create((set) => ({
 
   fetchMySquad: async () => {
     try {
-      set({ loading: true });
+      set({ loading: true, error: null });
       const { data } = await squadService.getMySquad();
       set({ squad: data, loading: false });
     } catch (err) {
@@ -16,5 +16,10 @@ export const useSquadStore = create((set) => ({
     }
   },
 
-  clearSquad: () => set({ squad: null })
+  refreshSquad: async () => {
+    const { data } = await squadService.getMySquad();
+    set({ squad: data });
+  },
+
+  clearSquad: () => set({ squad: null }),
 }));

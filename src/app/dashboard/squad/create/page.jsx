@@ -4,12 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Users, Gamepad2 } from "lucide-react";
+import { createSquad } from "@/services/squadService";
+import { useSquadStore } from "@/store/squadStore";
 
 const ROLES = ["PRIMARY", "SECONDARY", "SNIPER", "NADER"];
-const GAMES = ["Free Fire", "BGMI", "Valorant"]; // extend later
+const GAMES = ["Free Fire", "BGMI", "Valorant"];
 
 export default function CreateSquadPage() {
   const router = useRouter();
+  const { fetchMySquad } = useSquadStore();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,10 +22,6 @@ export default function CreateSquadPage() {
     game: "",
     playstyleRole: "",
   });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,23 +34,11 @@ export default function CreateSquadPage() {
 
     try {
       setLoading(true);
-
-      const res = await fetch("http://localhost:5000/api/squads", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to create squad");
-      }
-
+      await createSquad(form);
+      await fetchMySquad();
       router.push("/dashboard/squad");
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || "Failed to create squad");
     } finally {
       setLoading(false);
     }
@@ -59,9 +46,7 @@ export default function CreateSquadPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-
-      {/* HEADER */}
-      <div className="space-y-2">
+      <div>
         <h1 className="text-3xl font-bold text-yellow-400">
           Create Squad
         </h1>
@@ -70,24 +55,21 @@ export default function CreateSquadPage() {
         </p>
       </div>
 
-      {/* FORM */}
       <form
         onSubmit={handleSubmit}
         className="rounded-2xl bg-zinc-900/70 border border-yellow-400/10 p-8 space-y-6"
       >
-
-        {/* SQUAD NAME */}
         <Field label="Squad Name">
           <input
             name="squadName"
             value={form.squadName}
-            onChange={handleChange}
-            placeholder="e.g. Team Nemesis"
+            onChange={(e) =>
+              setForm({ ...form, squadName: e.target.value })
+            }
             className="input"
           />
         </Field>
 
-        {/* GAME */}
         <Field label="Game">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {GAMES.map((game) => (
@@ -103,7 +85,6 @@ export default function CreateSquadPage() {
           </div>
         </Field>
 
-        {/* ROLE */}
         <Field label="Your Role (IGL)">
           <div className="flex flex-wrap gap-3">
             {ROLES.map((role) => (
@@ -121,36 +102,20 @@ export default function CreateSquadPage() {
         </Field>
 
         {error && (
-          <p className="text-red-400 text-sm">
-            {error}
-          </p>
+          <p className="text-red-400 text-sm">{error}</p>
         )}
 
-        {/* ACTIONS */}
-        <div className="flex gap-4 pt-4">
-          <Button
-            disabled={loading}
-            className="bg-yellow-400 text-black hover:bg-yellow-300"
-          >
-            <Users size={16} className="mr-2" />
-            Create Squad
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="border-zinc-600 text-zinc-300"
-            onClick={() => router.back()}
-          >
-            Cancel
-          </Button>
-        </div>
+        <Button
+          disabled={loading}
+          className="bg-yellow-400 text-black hover:bg-yellow-300"
+        >
+          <Users size={16} className="mr-2" />
+          Create Squad
+        </Button>
       </form>
     </div>
   );
 }
-
-/* 🔹 SMALL UI HELPERS */
 
 function Field({ label, children }) {
   return (
@@ -166,10 +131,10 @@ function SelectCard({ active, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm transition ${
+      className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm ${
         active
           ? "bg-yellow-400 text-black border-yellow-400"
-          : "border-zinc-700 text-zinc-300 hover:border-yellow-400"
+          : "border-zinc-700 text-zinc-300"
       }`}
     >
       {children}
