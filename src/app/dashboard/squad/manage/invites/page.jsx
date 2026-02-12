@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSquadSentInvites, cancelInvite } from "@/services/squadService";
+import { useRouter } from "next/navigation";
+import {
+  getSquadSentInvites,
+  cancelInvite,
+} from "@/services/squadService";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, Users } from "lucide-react";
 
 export default function SquadInvitesPage() {
+  const router = useRouter();
   const [invites, setInvites] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadInvites = async () => {
@@ -14,6 +21,8 @@ export default function SquadInvitesPage() {
         setInvites(data);
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -26,27 +35,84 @@ export default function SquadInvitesPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl text-yellow-400">
-        Sent Invites
-      </h1>
+    <div className="max-w-4xl mx-auto space-y-10">
 
-      {invites.map((invite) => (
-        <div key={invite._id} className="flex justify-between">
-          <div>{invite.player.name}</div>
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
 
+        <div className="flex items-center gap-4">
           <Button
-            size="sm"
-            variant="outline"
-            onClick={async () => {
-              await cancelInvite(invite._id);
-              refresh();
-            }}
+            className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+            onClick={() => router.push("/dashboard/squad")}
           >
-            Cancel
+            <ArrowLeft size={16} className="mr-2" />
+            Back
           </Button>
+
+          <h1 className="text-3xl font-bold text-yellow-400">
+            Sent Invites
+          </h1>
         </div>
-      ))}
+
+        <span className="text-sm text-zinc-500">
+          {invites.length} Pending
+        </span>
+      </div>
+
+      {/* LOADING */}
+      {loading && (
+        <div className="text-zinc-500 text-sm">
+          Loading invites...
+        </div>
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading && invites.length === 0 && (
+        <div className="rounded-2xl bg-zinc-900/60 border border-yellow-400/10 p-12 text-center">
+          <Users className="mx-auto text-zinc-600 mb-4" size={42} />
+          <p className="text-zinc-400">
+            You haven't sent any invites yet.
+          </p>
+        </div>
+      )}
+
+      {/* INVITES LIST */}
+      <div className="space-y-5">
+        {invites.map((invite) => (
+          <div
+            key={invite._id}
+            className="rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900/80 to-black border border-yellow-400/10 p-6 flex items-center justify-between hover:border-yellow-400/40 transition"
+          >
+            {/* Player Info */}
+            <div>
+              <p className="text-lg font-semibold text-white">
+                {invite.player.name}
+              </p>
+
+              <p className="text-sm text-zinc-400">
+                @{invite.player.username}
+              </p>
+
+              <span className="inline-block mt-2 text-xs px-3 py-1 rounded-full bg-yellow-400/10 text-yellow-400">
+                {invite.status}
+              </span>
+            </div>
+
+            {/* Cancel Button */}
+            {invite.status === "PENDING" && (
+              <Button
+                className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                onClick={async () => {
+                  await cancelInvite(invite._id);
+                  refresh();
+                }}
+              >
+                Cancel Invite
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

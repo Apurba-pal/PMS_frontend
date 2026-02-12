@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSquadStore } from "@/store/squadStore";
+import { getSquadJoinRequests } from "@/services/squadService";
 import {
   Users,
   Plus,
@@ -20,9 +21,20 @@ import {
 export default function SquadPage() {
   const router = useRouter();
   const { squad, loading, fetchMySquad, clearSquad } = useSquadStore();
+  const [joinCount, setJoinCount] = useState(0);
 
   useEffect(() => {
     fetchMySquad();
+    const loadJoinCount = async () => {
+      try {
+        const { data } = await getSquadJoinRequests();
+        setJoinCount(data.length);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadJoinCount();
   }, []);
 
   // ✅ Determine IGL directly from squad
@@ -118,7 +130,7 @@ export default function SquadPage() {
               <>
                 <Button
                   variant="outline"
-                  className="border-yellow-500 text-yellow-400"
+                  className="border-yellow-500 text-yellow-400 bg-black hover:bg-yellow-400"
                   onClick={() =>
                     router.push(
                       "/dashboard/squad/manage/invites"
@@ -129,7 +141,7 @@ export default function SquadPage() {
                 </Button>
 
                 <Button
-                  className="bg-yellow-500 text-black hover:bg-yellow-400"
+                  className="bg-yellow-500 text-black hover:bg-black border border-transparent hover:border-yellow-400 hover:text-yellow-400"
                   onClick={() =>
                     router.push(
                       "/dashboard/squad/manage/join-requests"
@@ -137,6 +149,11 @@ export default function SquadPage() {
                   }
                 >
                   Join Requests
+                  {joinCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-black text-yellow-400 border border-yellow-400 text-xs px-2 py-[2px] rounded-full">
+                      {joinCount}
+                    </span>
+                  )}
                 </Button>
 
                 <Button
