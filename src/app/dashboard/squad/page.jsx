@@ -76,7 +76,7 @@ export default function SquadPage() {
 
             <Button
               variant="outline"
-              className="border-zinc-600 text-zinc-300 hover:border-yellow-400 hover:text-yellow-400"
+              className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
               onClick={() =>
                 router.push("/dashboard/squad/search")
               }
@@ -126,65 +126,93 @@ export default function SquadPage() {
 
           {/* ACTIONS */}
           <div className="md:ml-auto flex flex-wrap gap-3">
-            {isIGL ? (
-              <>
-                <Button
-                  variant="outline"
-                  className="border-yellow-500 text-yellow-400 bg-black hover:bg-yellow-400"
-                  onClick={() =>
-                    router.push(
-                      "/dashboard/squad/manage/invites"
-                    )
-                  }
-                >
-                  Manage Invites
-                </Button>
+  {isIGL ? (
+    <>
+      {/* SEARCH PLAYERS */}
+      <Button
+        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+        onClick={() =>
+          router.push("/dashboard/squad/search")
+        }
+      >
+        <Search size={16} className="mr-2" />
+        Search
+      </Button>
 
-                <Button
-                  className="bg-yellow-500 text-black hover:bg-black border border-transparent hover:border-yellow-400 hover:text-yellow-400"
-                  onClick={() =>
-                    router.push(
-                      "/dashboard/squad/manage/join-requests"
-                    )
-                  }
-                >
-                  Join Requests
-                  {joinCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-black text-yellow-400 border border-yellow-400 text-xs px-2 py-[2px] rounded-full">
-                      {joinCount}
-                    </span>
-                  )}
-                </Button>
+      {/* MANAGE INVITES */}
+      <Button
+        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+        onClick={() =>
+          router.push(
+            "/dashboard/squad/manage/invites"
+          )
+        }
+      >
+        Manage Invites
+      </Button>
 
-                <Button
-                  variant="destructive"
-                  onClick={async () => {
-                    const ok = confirm(
-                      "Are you sure? This will permanently disband the squad."
-                    );
-                    if (!ok) return;
+      {/* JOIN REQUESTS */}
+      <Button
+        className="relative bg-yellow-400 text-black hover:bg-yellow-300"
+        onClick={() =>
+          router.push(
+            "/dashboard/squad/manage/join-requests"
+          )
+        }
+      >
+        Join Requests
 
-                    await disbandSquad();
-                    clearSquad();
-                  }}
-                >
-                  Disband
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="outline"
-                className="border-red-500 text-red-400 hover:bg-red-500/10"
-                onClick={async () => {
-                  await requestLeaveSquad();
-                  clearSquad();
-                }}
-              >
-                <LogOut size={16} className="mr-2" />
-                Leave Squad
-              </Button>
-            )}
-          </div>
+        {joinCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-black text-yellow-400 border border-yellow-400 text-xs px-2 py-[2px] rounded-full">
+            {joinCount}
+          </span>
+        )}
+      </Button>
+
+      {/* DISBAND */}
+      <Button
+        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+        onClick={async () => {
+          const ok = confirm(
+            "Are you sure? This will permanently disband the squad."
+          );
+          if (!ok) return;
+
+          await disbandSquad();
+          clearSquad();
+        }}
+      >
+        Disband
+      </Button>
+    </>
+  ) : (
+    <>
+      {/* SEARCH SQUADS */}
+      <Button
+        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+        onClick={() =>
+          router.push("/dashboard/squad/search")
+        }
+      >
+        <Search size={16} className="mr-2" />
+        Search Squads
+      </Button>
+
+      {/* LEAVE */}
+      <Button
+        className="bg-yellow-400 text-black hover:bg-yellow-300"
+        onClick={async () => {
+          await requestLeaveSquad();
+          clearSquad();
+        }}
+      >
+        <LogOut size={16} className="mr-2" />
+        Leave Squad
+      </Button>
+    </>
+  )}
+</div>
+
         </div>
       </div>
 
