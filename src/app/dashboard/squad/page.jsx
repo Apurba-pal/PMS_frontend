@@ -23,21 +23,49 @@ export default function SquadPage() {
   const { squad, loading, fetchMySquad, clearSquad } = useSquadStore();
   const [joinCount, setJoinCount] = useState(0);
 
-  useEffect(() => {
-    fetchMySquad();
-    const loadJoinCount = async () => {
-      try {
-        const { data } = await getSquadJoinRequests();
-        setJoinCount(data.length);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+  // useEffect(() => {
+  //   fetchMySquad();
+  //   const loadJoinCount = async () => {
+  //     try {
+  //       const { data } = await getSquadJoinRequests();
+  //       setJoinCount(data.length);
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
 
-    loadJoinCount();
-  }, []);
+  //   loadJoinCount();
+  // }, []);
+
 
   // ✅ Determine IGL directly from squad
+  
+  useEffect(() => {
+  fetchMySquad();
+}, []);
+
+useEffect(() => {
+  const loadJoinCount = async () => {
+    if (!squad) return;
+
+    const isIGL =
+      squad?.members?.length === 1
+        ? squad.members[0].isIGL === true
+        : squad?.members?.some((m) => m.isIGL === true);
+
+    if (!isIGL) return;
+
+    try {
+      const { data } = await getSquadJoinRequests();
+      setJoinCount(data.length);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  loadJoinCount();
+}, [squad]);
+
   const isIGL =
     squad?.members?.length === 1
       ? squad.members[0].isIGL === true
@@ -84,6 +112,24 @@ export default function SquadPage() {
               <Search size={16} className="mr-2" />
               Find Squad
             </Button>
+
+            <Button
+    className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+    onClick={() =>
+      router.push("/dashboard/squad/requests/my-requests")
+    }
+  >
+    My Requests
+  </Button>
+
+  <Button
+    className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+    onClick={() =>
+      router.push("/dashboard/squad/requests/my-invites")
+    }
+  >
+    My Invites
+  </Button>
           </div>
         </div>
       </div>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import {
   searchSquads,
   sendJoinRequest,
@@ -15,6 +17,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState({ squads: [], players: [] });
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const [sentInvites, setSentInvites] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
@@ -55,9 +58,19 @@ export default function SearchPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-10">
 
-      <h1 className="text-3xl font-bold text-yellow-400">
-        Search Players & Squads
-      </h1>
+<div className="flex items-center justify-between">
+  <Button
+    className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+    onClick={() => router.push("/dashboard/squad")}
+  >
+    <ArrowLeft size={16} className="mr-2" />
+    Back
+  </Button>
+
+  <h1 className="text-3xl font-bold text-yellow-400">
+    Search Players & Squads
+  </h1>
+</div>
 
       {/* SEARCH */}
       <div className="flex gap-3">
