@@ -22,6 +22,20 @@ export default function SquadPage() {
   const router = useRouter();
   const { squad, loading, fetchMySquad, clearSquad } = useSquadStore();
   const [joinCount, setJoinCount] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const res = await fetch("http://localhost:5000/api/auth/me", {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentUserId(data.userId);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   // useEffect(() => {
   //   fetchMySquad();
@@ -46,12 +60,10 @@ export default function SquadPage() {
 
 useEffect(() => {
   const loadJoinCount = async () => {
-    if (!squad) return;
+    if (!squad || !currentUserId) return;
 
     const isIGL =
-      squad?.members?.length === 1
-        ? squad.members[0].isIGL === true
-        : squad?.members?.some((m) => m.isIGL === true);
+      squad?.members?.find((m) => m.player._id === currentUserId)?.isIGL === true;
 
     if (!isIGL) return;
 
@@ -64,12 +76,10 @@ useEffect(() => {
   };
 
   loadJoinCount();
-}, [squad]);
+}, [squad, currentUserId]);
 
   const isIGL =
-    squad?.members?.length === 1
-      ? squad.members[0].isIGL === true
-      : squad?.members?.some((m) => m.isIGL === true);
+    squad?.members?.find((m) => m.player._id === currentUserId)?.isIGL === true;
 
   if (loading) return null;
 
