@@ -165,14 +165,17 @@ export default function EditPlayerProfile() {
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
           <div className="flex gap-4 pt-4 border-t border-yellow-400/10">
-            <Button className="bg-yellow-400 text-black hover:bg-yellow-300">
+            <Button
+              type="submit"
+              className="bg-yellow-400 text-black hover:bg-yellow-300"
+            >
               {isEdit ? "Save Changes" : "Create Profile"}
             </Button>
             <Button
               type="button"
               variant="outline"
               className="border-yellow-600 text-yellow-300 bg-transparent hover:bg-amber-600"
-              onClick={() => router.back()}
+              onClick={() => router.push("/dashboard/profile")}
             >
               Cancel
             </Button>
