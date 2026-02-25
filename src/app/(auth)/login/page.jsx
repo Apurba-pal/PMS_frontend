@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginUser } from "@/services/authService";
+import { loginUser, getMe } from "@/services/authService";
 import useAuthStore from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -26,10 +26,7 @@ export default function LoginPage() {
       await loginUser(form);
       login({});
 
-      const res = await fetch("http://localhost:5000/api/auth/me", {
-        credentials: "include",
-      });
-      const data = await res.json();
+      const { data } = await getMe();
 
       if (data.role === "ADMIN") {
         router.replace("/admin");

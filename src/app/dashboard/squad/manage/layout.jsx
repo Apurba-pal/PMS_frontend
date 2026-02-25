@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSquadStore } from "@/store/squadStore";
+import { getMe } from "@/services/authService";
 
 export default function ManageLayout({ children }) {
   const router = useRouter();
@@ -11,12 +12,11 @@ export default function ManageLayout({ children }) {
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const res = await fetch("http://localhost:5000/api/auth/me", {
-        credentials: "include",
-      });
-      if (res.ok) {
-        const data = await res.json();
+      try {
+        const { data } = await getMe();
         setCurrentUserId(data.userId);
+      } catch (err) {
+        console.error(err);
       }
     };
     fetchCurrentUser();

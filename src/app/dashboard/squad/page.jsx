@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSquadStore } from "@/store/squadStore";
 import { getSquadJoinRequests } from "@/services/squadService";
+import { getMe } from "@/services/authService";
 import {
   Users,
   Plus,
@@ -26,12 +27,11 @@ export default function SquadPage() {
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const res = await fetch("http://localhost:5000/api/auth/me", {
-        credentials: "include",
-      });
-      if (res.ok) {
-        const data = await res.json();
+      try {
+        const { data } = await getMe();
         setCurrentUserId(data.userId);
+      } catch (err) {
+        console.error(err);
       }
     };
     fetchCurrentUser();
@@ -53,30 +53,30 @@ export default function SquadPage() {
 
 
   // ✅ Determine IGL directly from squad
-  
+
   useEffect(() => {
-  fetchMySquad();
-}, []);
+    fetchMySquad();
+  }, []);
 
-useEffect(() => {
-  const loadJoinCount = async () => {
-    if (!squad || !currentUserId) return;
+  useEffect(() => {
+    const loadJoinCount = async () => {
+      if (!squad || !currentUserId) return;
 
-    const isIGL =
-      squad?.members?.find((m) => m.player._id === currentUserId)?.isIGL === true;
+      const isIGL =
+        squad?.members?.find((m) => m.player._id === currentUserId)?.isIGL === true;
 
-    if (!isIGL) return;
+      if (!isIGL) return;
 
-    try {
-      const { data } = await getSquadJoinRequests();
-      setJoinCount(data.length);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      try {
+        const { data } = await getSquadJoinRequests();
+        setJoinCount(data.length);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  loadJoinCount();
-}, [squad, currentUserId]);
+    loadJoinCount();
+  }, [squad, currentUserId]);
 
   const isIGL =
     squad?.members?.find((m) => m.player._id === currentUserId)?.isIGL === true;
@@ -124,22 +124,22 @@ useEffect(() => {
             </Button>
 
             <Button
-    className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
-    onClick={() =>
-      router.push("/dashboard/squad/requests/my-requests")
-    }
-  >
-    My Requests
-  </Button>
+              className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+              onClick={() =>
+                router.push("/dashboard/squad/requests/my-requests")
+              }
+            >
+              My Requests
+            </Button>
 
-  <Button
-    className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
-    onClick={() =>
-      router.push("/dashboard/squad/requests/my-invites")
-    }
-  >
-    My Invites
-  </Button>
+            <Button
+              className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+              onClick={() =>
+                router.push("/dashboard/squad/requests/my-invites")
+              }
+            >
+              My Invites
+            </Button>
           </div>
         </div>
       </div>
@@ -182,92 +182,92 @@ useEffect(() => {
 
           {/* ACTIONS */}
           <div className="md:ml-auto flex flex-wrap gap-3">
-  {isIGL ? (
-    <>
-      {/* SEARCH PLAYERS */}
-      <Button
-        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
-        onClick={() =>
-          router.push("/dashboard/squad/search")
-        }
-      >
-        <Search size={16} className="mr-2" />
-        Search
-      </Button>
+            {isIGL ? (
+              <>
+                {/* SEARCH PLAYERS */}
+                <Button
+                  className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                  onClick={() =>
+                    router.push("/dashboard/squad/search")
+                  }
+                >
+                  <Search size={16} className="mr-2" />
+                  Search
+                </Button>
 
-      {/* MANAGE INVITES */}
-      <Button
-        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
-        onClick={() =>
-          router.push(
-            "/dashboard/squad/manage/invites"
-          )
-        }
-      >
-        Manage Invites
-      </Button>
+                {/* MANAGE INVITES */}
+                <Button
+                  className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                  onClick={() =>
+                    router.push(
+                      "/dashboard/squad/manage/invites"
+                    )
+                  }
+                >
+                  Manage Invites
+                </Button>
 
-      {/* JOIN REQUESTS */}
-      <Button
-        className="relative bg-yellow-400 text-black hover:bg-yellow-300"
-        onClick={() =>
-          router.push(
-            "/dashboard/squad/manage/join-requests"
-          )
-        }
-      >
-        Join Requests
+                {/* JOIN REQUESTS */}
+                <Button
+                  className="relative bg-yellow-400 text-black hover:bg-yellow-300"
+                  onClick={() =>
+                    router.push(
+                      "/dashboard/squad/manage/join-requests"
+                    )
+                  }
+                >
+                  Join Requests
 
-        {joinCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-black text-yellow-400 border border-yellow-400 text-xs px-2 py-[2px] rounded-full">
-            {joinCount}
-          </span>
-        )}
-      </Button>
+                  {joinCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-black text-yellow-400 border border-yellow-400 text-xs px-2 py-[2px] rounded-full">
+                      {joinCount}
+                    </span>
+                  )}
+                </Button>
 
-      {/* DISBAND */}
-      <Button
-        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
-        onClick={async () => {
-          const ok = confirm(
-            "Are you sure? This will permanently disband the squad."
-          );
-          if (!ok) return;
+                {/* DISBAND */}
+                <Button
+                  className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                  onClick={async () => {
+                    const ok = confirm(
+                      "Are you sure? This will permanently disband the squad."
+                    );
+                    if (!ok) return;
 
-          await disbandSquad();
-          clearSquad();
-        }}
-      >
-        Disband
-      </Button>
-    </>
-  ) : (
-    <>
-      {/* SEARCH SQUADS */}
-      <Button
-        className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
-        onClick={() =>
-          router.push("/dashboard/squad/search")
-        }
-      >
-        <Search size={16} className="mr-2" />
-        Search Squads
-      </Button>
+                    await disbandSquad();
+                    clearSquad();
+                  }}
+                >
+                  Disband
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* SEARCH SQUADS */}
+                <Button
+                  className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                  onClick={() =>
+                    router.push("/dashboard/squad/search")
+                  }
+                >
+                  <Search size={16} className="mr-2" />
+                  Search Squads
+                </Button>
 
-      {/* LEAVE */}
-      <Button
-        className="bg-yellow-400 text-black hover:bg-yellow-300"
-        onClick={async () => {
-          await requestLeaveSquad();
-          clearSquad();
-        }}
-      >
-        <LogOut size={16} className="mr-2" />
-        Leave Squad
-      </Button>
-    </>
-  )}
-</div>
+                {/* LEAVE */}
+                <Button
+                  className="bg-yellow-400 text-black hover:bg-yellow-300"
+                  onClick={async () => {
+                    await requestLeaveSquad();
+                    clearSquad();
+                  }}
+                >
+                  <LogOut size={16} className="mr-2" />
+                  Leave Squad
+                </Button>
+              </>
+            )}
+          </div>
 
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getMe } from "@/services/authService";
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
@@ -9,24 +10,18 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const res = await fetch(
-        "http://localhost:5000/api/auth/me",
-        { credentials: "include" }
-      );
+      try {
+        const { data } = await getMe();
 
-      if (!res.ok) {
+        if (data.role !== "ADMIN") {
+          router.replace("/dashboard");
+          return;
+        }
+
+        setAllowed(true);
+      } catch {
         router.replace("/login");
-        return;
       }
-
-      const data = await res.json();
-
-      if (data.role !== "ADMIN") {
-        router.replace("/dashboard");
-        return;
-      }
-
-      setAllowed(true); // ✅ only now render
     };
 
     checkAdmin();

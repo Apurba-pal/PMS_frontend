@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { User, Gamepad2, QrCode, Users } from "lucide-react";
+import { getMyProfile } from "@/services/profileService";
 
 /* 🧮 AGE CALCULATOR */
 const calculateAge = (dob) => {
@@ -29,20 +30,14 @@ export default function PlayerProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(
-          "http://localhost:5000/api/player/me",
-          { credentials: "include" }
-        );
-
-        if (res.status === 404) {
-          setProfile(null);
-          return;
-        }
-
-        const data = await res.json();
+        const { data } = await getMyProfile();
         setProfile(data);
       } catch (err) {
-        console.error(err);
+        if (err.response?.status === 404) {
+          setProfile(null);
+        } else {
+          console.error(err);
+        }
       } finally {
         setLoading(false);
       }
@@ -122,7 +117,7 @@ export default function PlayerProfilePage() {
         <Stat label="Status" value={profile.playerStatus} />
         <Stat
           label="Current Squad"
-          value={profile.currentSquad?.squadName  || "—"}
+          value={profile.currentSquad?.squadName || "—"}
         />
       </div>
 

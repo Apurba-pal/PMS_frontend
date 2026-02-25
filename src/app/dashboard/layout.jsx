@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { logoutUser } from "@/services/authService";
+import { logoutUser, getMe } from "@/services/authService";
 import useAuthStore from "@/store/authStore";
 import {
   LayoutDashboard,
@@ -21,24 +21,18 @@ export default function DashboardLayout({ children }) {
 
   useEffect(() => {
     const checkPlayer = async () => {
-      const res = await fetch(
-        "http://localhost:5000/api/auth/me",
-        { credentials: "include" }
-      );
+      try {
+        const { data } = await getMe();
 
-      if (!res.ok) {
+        if (data.role !== "PLAYER") {
+          router.replace("/admin");
+          return;
+        }
+
+        setAllowed(true);
+      } catch {
         router.replace("/login");
-        return;
       }
-
-      const data = await res.json();
-
-      if (data.role !== "PLAYER") {
-        router.replace("/admin");
-        return;
-      }
-
-      setAllowed(true);
     };
 
     checkPlayer();
@@ -73,11 +67,10 @@ export default function DashboardLayout({ children }) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-4 py-2 transition ${
-                  pathname === item.href
+                className={`flex items-center gap-3 rounded-lg px-4 py-2 transition ${pathname === item.href
                     ? "bg-yellow-400 text-black"
                     : "hover:bg-zinc-800 text-zinc-300"
-                }`}
+                  }`}
               >
                 <Icon size={18} />
                 {item.name}

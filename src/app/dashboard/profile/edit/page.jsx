@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { User, QrCode, Camera } from "lucide-react";
+import {
+  getMyProfile,
+  createProfile,
+  updateProfile,
+  uploadProfilePhoto,
+  uploadProfileQR,
+} from "@/services/profileService";
 
 const ROLES = ["PRIMARY", "SECONDARY", "SNIPER", "NADER", "IGL"];
 
@@ -30,16 +37,7 @@ export default function EditPlayerProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/player/me", {
-          credentials: "include",
-        });
-
-        if (res.status === 404) {
-          setIsEdit(false);
-          return;
-        }
-
-        const data = await res.json();
+        const { data } = await getMyProfile();
         setIsEdit(true);
 
         setForm({
@@ -51,8 +49,12 @@ export default function EditPlayerProfile() {
 
         setPhotoPreview(data.profilePhoto || null);
         setQrPreview(data.profileQR || null);
-      } catch {
-        setError("Failed to load profile");
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setIsEdit(false);
+        } else {
+          setError("Failed to load profile");
+        }
       } finally {
         setLoading(false);
       }
@@ -75,17 +77,6 @@ export default function EditPlayerProfile() {
     }));
   };
 
-  const uploadImage = async (file, endpoint) => {
-    const fd = new FormData();
-    fd.append("image", file);
-
-    const res = await fetch(
-      `http://localhost:5000/api/player/${endpoint}`,
-      { method: "POST", credentials: "include", body: fd }
-    );
-
-    if (!res.ok) throw new Error("Image upload failed");
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,24 +88,18 @@ export default function EditPlayerProfile() {
     }
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/player${isEdit ? "/me" : ""}`,
-        {
-          method: isEdit ? "PUT" : "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      if (isEdit) {
+        await updateProfile(form);
+      } else {
+        await createProfile(form);
+      }
 
-      if (!res.ok) throw new Error("Failed to save profile");
-
-      if (photoFile) await uploadImage(photoFile, "upload-photo");
-      if (qrFile) await uploadImage(qrFile, "upload-qr");
+      if (photoFile) await uploadProfilePhoto(photoFile);
+      if (qrFile) await uploadProfileQR(qrFile);
 
       router.push("/dashboard/profile");
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || "Failed to save profile");
     }
   };
 
@@ -166,11 +151,10 @@ export default function EditPlayerProfile() {
                   type="button"
                   key={role}
                   onClick={() => toggleRole(role)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium border transition ${
-                    form.roles.includes(role)
-                      ? "bg-yellow-400 text-black border-yellow-400"
-                      : "border-zinc-700 text-zinc-300 hover:border-yellow-400"
-                  }`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium border transition ${form.roles.includes(role)
+                    ? "bg-yellow-400 text-black border-yellow-400"
+                    : "border-zinc-700 text-zinc-300 hover:border-yellow-400"
+                    }`}
                 >
                   {role}
                 </button>
@@ -230,9 +214,8 @@ function ProfileImage({ label, preview, icon, square = false, onChange }) {
   return (
     <div className="space-y-2 text-center">
       <div
-        className={`mx-auto ${
-          square ? "w-24 h-24 rounded-lg" : "w-32 h-32 rounded-full"
-        } bg-zinc-800 flex items-center justify-center overflow-hidden`}
+        className={`mx-auto ${square ? "w-24 h-24 rounded-lg" : "w-32 h-32 rounded-full"
+          } bg-zinc-800 flex items-center justify-center overflow-hidden`}
       >
         {preview ? (
           <img src={preview} className="w-full h-full object-cover" />
@@ -241,7 +224,7 @@ function ProfileImage({ label, preview, icon, square = false, onChange }) {
         )}
       </div>
 
-<label className="inline-flex items-center gap-2 text-xs cursor-pointer 
+      <label className="inline-flex items-center gap-2 text-xs cursor-pointer 
   rounded-full border border-zinc-700 bg-zinc-800/60 px-3 py-1.5 
   text-zinc-300 transition 
   hover:border-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-400">
