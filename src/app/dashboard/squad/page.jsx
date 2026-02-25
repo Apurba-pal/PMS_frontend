@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSquadStore } from "@/store/squadStore";
-import { getSquadJoinRequests } from "@/services/squadService";
 import { getMe } from "@/services/authService";
 import {
   Users,
@@ -13,16 +12,22 @@ import {
   Crown,
   ShieldCheck,
   LogOut,
+  UserX,
 } from "lucide-react";
 import {
+  getSquadJoinRequests,
+  getSquadLeaveRequests,
   requestLeaveSquad,
   disbandSquad,
+  kickPlayer,
 } from "@/services/squadService";
 
 export default function SquadPage() {
   const router = useRouter();
-  const { squad, loading, fetchMySquad, clearSquad } = useSquadStore();
+  const { squad, loading, fetchMySquad, clearSquad, refreshSquad } = useSquadStore();
   const [joinCount, setJoinCount] = useState(0);
+  const [leaveCount, setLeaveCount] = useState(0);
+  const [leavePending, setLeavePending] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
@@ -59,7 +64,7 @@ export default function SquadPage() {
   }, []);
 
   useEffect(() => {
-    const loadJoinCount = async () => {
+    const loadCounts = async () => {
       if (!squad || !currentUserId) return;
 
       const isIGL =
@@ -68,14 +73,18 @@ export default function SquadPage() {
       if (!isIGL) return;
 
       try {
-        const { data } = await getSquadJoinRequests();
-        setJoinCount(data.length);
+        const [{ data: joinData }, { data: leaveData }] = await Promise.all([
+          getSquadJoinRequests(),
+          getSquadLeaveRequests(),
+        ]);
+        setJoinCount(joinData.length);
+        setLeaveCount(leaveData.length);
       } catch (err) {
         console.error(err);
       }
     };
 
-    loadJoinCount();
+    loadCounts();
   }, [squad, currentUserId]);
 
   const isIGL =
@@ -225,6 +234,24 @@ export default function SquadPage() {
                   )}
                 </Button>
 
+                {/* LEAVE REQUESTS */}
+                <Button
+                  className="relative bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                  onClick={() =>
+                    router.push(
+                      "/dashboard/squad/manage/leave-requests"
+                    )
+                  }
+                >
+                  Leave Requests
+
+                  {leaveCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs px-2 py-[2px] rounded-full">
+                      {leaveCount}
+                    </span>
+                  )}
+                </Button>
+
                 {/* DISBAND */}
                 <Button
                   className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
@@ -254,17 +281,29 @@ export default function SquadPage() {
                   Search Squads
                 </Button>
 
-                {/* LEAVE */}
-                <Button
-                  className="bg-yellow-400 text-black hover:bg-yellow-300"
-                  onClick={async () => {
-                    await requestLeaveSquad();
-                    clearSquad();
-                  }}
-                >
-                  <LogOut size={16} className="mr-2" />
-                  Leave Squad
-                </Button>
+                {/* LEAVE — shows pending state instead of instant removal */}
+                {leavePending ? (
+                  <span className="text-sm text-yellow-400 border border-yellow-400/30 rounded-md px-3 py-2">
+                    Leave request sent — awaiting IGL approval
+                  </span>
+                ) : (
+                  <Button
+                    className="bg-yellow-400 text-black hover:bg-yellow-300"
+                    onClick={async () => {
+                      const ok = confirm("Request to leave the squad? The IGL must approve before you are removed.");
+                      if (!ok) return;
+                      try {
+                        await requestLeaveSquad();
+                        setLeavePending(true);
+                      } catch (err) {
+                        alert(err.response?.data?.message || "Failed to send leave request");
+                      }
+                    }}
+                  >
+                    <LogOut size={16} className="mr-2" />
+                    Leave Squad
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -302,6 +341,26 @@ export default function SquadPage() {
                 <span className="inline-block mt-3 text-xs text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full">
                   IGL
                 </span>
+              )}
+
+              {/* KICK — only shown to IGL, and not on IGL's own card */}
+              {isIGL && !m.isIGL && (
+                <button
+                  className="mt-3 flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition"
+                  onClick={async () => {
+                    const ok = confirm(`Kick ${m.player.name} from the squad?`);
+                    if (!ok) return;
+                    try {
+                      await kickPlayer(m.player._id);
+                      refreshSquad();
+                    } catch (err) {
+                      alert(err.response?.data?.message || "Failed to kick player");
+                    }
+                  }}
+                >
+                  <UserX size={13} />
+                  Kick
+                </button>
               )}
             </div>
           ))}
