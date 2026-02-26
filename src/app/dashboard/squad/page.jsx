@@ -17,6 +17,7 @@ import {
 import {
   getSquadJoinRequests,
   getSquadLeaveRequests,
+  getMyInvites,
   requestLeaveSquad,
   disbandSquad,
   kickPlayer,
@@ -27,6 +28,7 @@ export default function SquadPage() {
   const { squad, loading, fetchMySquad, clearSquad, refreshSquad } = useSquadStore();
   const [joinCount, setJoinCount] = useState(0);
   const [leaveCount, setLeaveCount] = useState(0);
+  const [myInviteCount, setMyInviteCount] = useState(0);
   const [leavePending, setLeavePending] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
@@ -73,12 +75,14 @@ export default function SquadPage() {
       if (!isIGL) return;
 
       try {
-        const [{ data: joinData }, { data: leaveData }] = await Promise.all([
+        const [{ data: joinData }, { data: leaveData }, { data: myInvitesData }] = await Promise.all([
           getSquadJoinRequests(),
           getSquadLeaveRequests(),
+          getMyInvites(),
         ]);
         setJoinCount(joinData.length);
         setLeaveCount(leaveData.length);
+        setMyInviteCount(myInvitesData.filter((i) => i.status === "PENDING").length);
       } catch (err) {
         console.error(err);
       }
@@ -250,6 +254,31 @@ export default function SquadPage() {
                       {leaveCount}
                     </span>
                   )}
+                </Button>
+
+                {/* MY INVITES (IGL is also a player) */}
+                <Button
+                  className="relative bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                  onClick={() =>
+                    router.push("/dashboard/squad/requests/my-invites")
+                  }
+                >
+                  My Invites
+                  {myInviteCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs px-2 py-[2px] rounded-full">
+                      {myInviteCount}
+                    </span>
+                  )}
+                </Button>
+
+                {/* MY JOIN REQUESTS (IGL is also a player) */}
+                <Button
+                  className="bg-black border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+                  onClick={() =>
+                    router.push("/dashboard/squad/requests/my-requests")
+                  }
+                >
+                  My Requests
                 </Button>
 
                 {/* DISBAND */}
