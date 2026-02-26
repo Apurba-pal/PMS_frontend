@@ -21,6 +21,7 @@ import {
   requestLeaveSquad,
   disbandSquad,
   kickPlayer,
+  transferIGL,
 } from "@/services/squadService";
 
 export default function SquadPage() {
@@ -372,24 +373,43 @@ export default function SquadPage() {
                 </span>
               )}
 
-              {/* KICK — only shown to IGL, and not on IGL's own card */}
+              {/* KICK & TRANSFER IGL — only shown to IGL, and not on IGL's own card */}
               {isIGL && !m.isIGL && (
-                <button
-                  className="mt-3 flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition"
-                  onClick={async () => {
-                    const ok = confirm(`Kick ${m.player.name} from the squad?`);
-                    if (!ok) return;
-                    try {
-                      await kickPlayer(m.player._id);
-                      refreshSquad();
-                    } catch (err) {
-                      alert(err.response?.data?.message || "Failed to kick player");
-                    }
-                  }}
-                >
-                  <UserX size={13} />
-                  Kick
-                </button>
+                <div className="mt-3 flex items-center gap-4">
+                  <button
+                    className="flex items-center gap-1 text-xs text-yellow-400 hover:text-yellow-300 transition"
+                    onClick={async () => {
+                      const ok = confirm(`Transfer IGL role to ${m.player.name}? You will become a regular member.`);
+                      if (!ok) return;
+                      try {
+                        await transferIGL(m.player._id);
+                        refreshSquad();
+                      } catch (err) {
+                        alert(err.response?.data?.message || "Failed to transfer IGL");
+                      }
+                    }}
+                  >
+                    <Crown size={13} />
+                    Make IGL
+                  </button>
+
+                  <button
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition"
+                    onClick={async () => {
+                      const ok = confirm(`Kick ${m.player.name} from the squad?`);
+                      if (!ok) return;
+                      try {
+                        await kickPlayer(m.player._id);
+                        refreshSquad();
+                      } catch (err) {
+                        alert(err.response?.data?.message || "Failed to kick player");
+                      }
+                    }}
+                  >
+                    <UserX size={13} />
+                    Kick
+                  </button>
+                </div>
               )}
             </div>
           ))}
