@@ -59,10 +59,13 @@ export default function DashboardLayout({ children }) {
     router.push("/login");
   };
 
-  // Current page label for top bar
+  // Current page label for top bar — same matching logic as the active tab
   const currentPage =
-    navItems.find((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
-      ?.name ?? "Dashboard";
+    navItems.find((i) =>
+      i.href === "/dashboard"
+        ? pathname === i.href
+        : pathname === i.href || pathname.startsWith(i.href + "/")
+    )?.name ?? "Dashboard";
 
   /* ── shared sidebar content ───────────────────── */
   const SidebarContent = () => (

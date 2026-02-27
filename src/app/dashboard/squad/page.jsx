@@ -96,16 +96,22 @@ export default function SquadPage() {
     const loadCounts = async () => {
       if (!squad || !currentUserId) return;
       const isLeader = squad.members.find((m) => m.player._id === currentUserId)?.isIGL === true;
+
+      // Personal invite count — relevant for ALL members
+      try {
+        const { data: id } = await getMyInvites();
+        setMyInviteCount(id.filter((i) => i.status === "PENDING").length);
+      } catch (err) { console.error(err); }
+
+      // IGL-only squad counts
       if (!isLeader) return;
       try {
-        const [{ data: jd }, { data: ld }, { data: id }] = await Promise.all([
+        const [{ data: jd }, { data: ld }] = await Promise.all([
           getSquadJoinRequests(),
           getSquadLeaveRequests(),
-          getMyInvites(),
         ]);
         setJoinCount(jd.length);
         setLeaveCount(ld.length);
-        setMyInviteCount(id.filter((i) => i.status === "PENDING").length);
       } catch (err) { console.error(err); }
     };
     loadCounts();
@@ -283,27 +289,42 @@ export default function SquadPage() {
                 </div>
               ) : (
                 /* member actions */
-                <div className="flex flex-wrap gap-3">
-                  <button onClick={() => router.push("/dashboard/squad/search")}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm border border-zinc-700 text-zinc-300 hover:border-yellow-400 hover:text-yellow-400 transition">
-                    <Search size={14} /> Search Squads
-                  </button>
-                  {leavePending ? (
-                    <span className="flex items-center gap-2 text-sm text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 rounded-xl px-4 py-2">
-                      <LogOut size={14} /> Leave request sent — awaiting IGL approval
-                    </span>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        if (!confirm("Request to leave the squad? The IGL must approve before you are removed.")) return;
-                        try { await requestLeaveSquad(); setLeavePending(true); }
-                        catch (err) { alert(err.response?.data?.message || "Failed to send leave request"); }
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm bg-red-500/10 border border-red-400/20 text-red-400 hover:bg-red-400/20 transition"
-                    >
-                      <LogOut size={14} /> Leave Squad
-                    </button>
-                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                  {/* left — squad */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5">
+                      <Users size={11} /> Squad
+                    </p>
+                    <NavBtn label="Search Squads" onClick={() => router.push("/dashboard/squad/search")} />
+                    {leavePending ? (
+                      <div className="flex items-center gap-2 text-sm text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 rounded-xl px-3 py-2">
+                        <LogOut size={13} /> Leave request sent — awaiting IGL approval
+                      </div>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          if (!confirm("Request to leave the squad? The IGL must approve before you are removed.")) return;
+                          try { await requestLeaveSquad(); setLeavePending(true); }
+                          catch (err) { alert(err.response?.data?.message || "Failed to send leave request"); }
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm bg-red-500/10 border border-red-400/20 text-red-400 hover:bg-red-400/20 transition"
+                      >
+                        <LogOut size={13} /> Leave Squad
+                      </button>
+                    )}
+                  </div>
+                  {/* right — personal */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5">
+                      <UserCheck size={11} /> Your Activity
+                    </p>
+                    <NavBtn label="My Invites" count={myInviteCount} primary={myInviteCount > 0} onClick={() => router.push("/dashboard/squad/requests/my-invites")} />
+                    <NavBtn label="My Join Requests" onClick={() => router.push("/dashboard/squad/requests/my-requests")} />
+                  </div>
+
+
+
                 </div>
               )}
             </div>
@@ -392,6 +413,6 @@ export default function SquadPage() {
         </div>
       </div>
 
-    </div>
+    </div >
   );
 }
