@@ -132,3 +132,7 @@ export const uploadSquadLogo = (file) => {
 // Delete squad logo
 export const deleteSquadLogo = () =>
   api.delete("/squads/delete-logo");
+
+// Rename squad (IGL only)
+export const renameSquad = (squadName) =>
+  api.patch("/squads/rename", { squadName });

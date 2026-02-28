@@ -267,6 +267,7 @@ export default function SquadPage() {
                     <NavBtn label="Manage Sent Invites" onClick={() => router.push("/dashboard/squad/manage/invites")} />
                     <NavBtn label="Join Requests" count={joinCount} primary={joinCount > 0} onClick={() => router.push("/dashboard/squad/manage/join-requests")} />
                     <NavBtn label="Leave Requests" count={leaveCount} onClick={() => router.push("/dashboard/squad/manage/leave-requests")} />
+                    <NavBtn label="⚙ Squad Settings" onClick={() => router.push("/dashboard/squad/manage/settings")} />
                     <button
                       onClick={async () => {
                         if (!confirm("Are you sure? This will permanently disband the squad.")) return;
