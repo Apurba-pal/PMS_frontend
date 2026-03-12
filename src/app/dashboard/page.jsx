@@ -13,11 +13,16 @@ import {
   Flame,
   Clock,
   Shield,
+  ShieldCheck,
+  ShieldAlert,
   Star,
   Zap,
   CheckCircle,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { getMe } from "@/services/authService";
+import { submitVerificationRequest } from "@/services/profileService";
 import { useSquadStore } from "@/store/squadStore";
 
 /* ─── dummy tournament data ─────────────────────── */
@@ -193,11 +198,112 @@ function TournamentRow({ t, onRegister }) {
   );
 }
 
+/* ─── verification widget ───────────────────────── */
+const verificationStatusConfig = {
+  UNVERIFIED:    { label: "Not Verified",    color: "text-zinc-400",   border: "border-zinc-700",          bg: "bg-zinc-800/50",       canSubmit: true },
+  PENDING_REVIEW:{ label: "Pending Review",  color: "text-yellow-400", border: "border-yellow-400/20",     bg: "bg-yellow-400/5",      canSubmit: false },
+  VERIFIED:      { label: "Verified ✓",      color: "text-green-400",  border: "border-green-400/20",      bg: "bg-green-400/5",       canSubmit: false },
+  DISABLED:      { label: "Account Disabled",color: "text-red-400",    border: "border-red-400/20",        bg: "bg-red-400/5",         canSubmit: false },
+};
+
+function VerificationWidget({ accountStatus, onStatusChange }) {
+  const [file, setFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const cfg = verificationStatusConfig[accountStatus] ?? verificationStatusConfig.UNVERIFIED;
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleSubmit = async () => {
+    if (!file || submitting) return;
+    setSubmitting(true);
+    try {
+      const { data } = await submitVerificationRequest(file);
+      showToast("Verification request submitted!");
+      onStatusChange(data.accountStatus);
+      setFile(null);
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Submission failed", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className={`rounded-2xl border ${cfg.border} ${cfg.bg} p-5 space-y-4 relative`}>
+      {/* In-widget toast */}
+      {toast && (
+        <div className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1.5 rounded-lg ${
+          toast.type === "error" ? "bg-red-500 text-white" : "bg-green-500 text-white"
+        }`}>{toast.msg}</div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+          <ShieldCheck size={13} /> ID Verification
+        </span>
+        <span className={`text-xs font-bold ${cfg.color}`}>{cfg.label}</span>
+      </div>
+
+      {accountStatus === "VERIFIED" ? (
+        <div className="flex items-center gap-3 py-4">
+          <div className="w-10 h-10 rounded-xl bg-green-400/10 border border-green-400/20 flex items-center justify-center">
+            <ShieldCheck size={18} className="text-green-400" />
+          </div>
+          <div>
+            <p className="text-green-400 font-semibold text-sm">Identity Verified</p>
+            <p className="text-zinc-500 text-xs">Your account has been verified by an admin.</p>
+          </div>
+        </div>
+      ) : accountStatus === "PENDING_REVIEW" ? (
+        <div className="flex items-center gap-3 py-4">
+          <div className="w-10 h-10 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center">
+            <ShieldAlert size={18} className="text-yellow-400" />
+          </div>
+          <div>
+            <p className="text-yellow-400 font-semibold text-sm">Under Review</p>
+            <p className="text-zinc-500 text-xs">Your ID proof is being reviewed by our admin team.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="text-zinc-500 text-xs leading-relaxed">
+            Upload a government-issued ID to verify your identity. Once approved, your profile will show a verified badge.
+          </p>
+
+          {/* File picker */}
+          <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-zinc-700 hover:border-zinc-500 rounded-xl p-4 cursor-pointer transition group">
+            <Upload size={18} className="text-zinc-600 group-hover:text-zinc-400 transition" />
+            <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition">
+              {file ? file.name : "Click to select ID proof image"}
+            </span>
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
+          </label>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!file || submitting}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-yellow-400 text-black text-sm font-bold hover:bg-yellow-300 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {submitting ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+            {submitting ? "Submitting…" : "Submit for Verification"}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════ */
 export default function DashboardHome() {
   const router = useRouter();
   const { squad, fetchMySquad } = useSquadStore();
   const [user, setUser] = useState(null);
+  const [accountStatus, setAccountStatus] = useState("UNVERIFIED");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -205,6 +311,7 @@ export default function DashboardHome() {
       try {
         const [meRes] = await Promise.all([getMe(), fetchMySquad()]);
         setUser(meRes.data);
+        setAccountStatus(meRes.data.accountStatus ?? "UNVERIFIED");
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -330,6 +437,13 @@ export default function DashboardHome() {
         </div>
 
       </div>
+
+      {/* ══ ID VERIFICATION WIDGET ════════════════════ */}
+      <VerificationWidget
+        accountStatus={accountStatus}
+        onStatusChange={setAccountStatus}
+      />
+
     </div>
   );
 }

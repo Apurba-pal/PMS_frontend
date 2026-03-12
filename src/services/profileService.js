@@ -33,3 +33,10 @@ export const uploadProfileQR = (file) => {
   fd.append("image", file);
   return api.post("/player/upload-qr", fd);
 };
+
+// Submit ID verification request
+export const submitVerificationRequest = (file) => {
+  const fd = new FormData();
+  fd.append("image", file);
+  return api.post("/player/verification-request", fd);
+};
