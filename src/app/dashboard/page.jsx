@@ -13,16 +13,11 @@ import {
   Flame,
   Clock,
   Shield,
-  ShieldCheck,
-  ShieldAlert,
   Star,
   Zap,
   CheckCircle,
-  Upload,
-  Loader2,
 } from "lucide-react";
 import { getMe } from "@/services/authService";
-import { submitVerificationRequest } from "@/services/profileService";
 import { useSquadStore } from "@/store/squadStore";
 
 /* ─── dummy tournament data ─────────────────────── */
@@ -303,7 +298,6 @@ export default function DashboardHome() {
   const router = useRouter();
   const { squad, fetchMySquad } = useSquadStore();
   const [user, setUser] = useState(null);
-  const [accountStatus, setAccountStatus] = useState("UNVERIFIED");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -311,7 +305,6 @@ export default function DashboardHome() {
       try {
         const [meRes] = await Promise.all([getMe(), fetchMySquad()]);
         setUser(meRes.data);
-        setAccountStatus(meRes.data.accountStatus ?? "UNVERIFIED");
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -437,13 +430,6 @@ export default function DashboardHome() {
         </div>
 
       </div>
-
-      {/* ══ ID VERIFICATION WIDGET ════════════════════ */}
-      <VerificationWidget
-        accountStatus={accountStatus}
-        onStatusChange={setAccountStatus}
-      />
-
     </div>
   );
 }
