@@ -25,8 +25,14 @@ export default function LoginPage() {
 
     try {
       await loginUser(form);
-      login({});
+
+      // Set a session cookie on the frontend domain so Next.js middleware
+      // can detect the logged-in state. The real auth token is httpOnly on
+      // the backend domain and is invisible to the middleware.
+      document.cookie = "session=1; path=/; max-age=604800; SameSite=Lax; Secure";
+
       const { data } = await getMe();
+      login(data);
       router.replace(data.role === "ADMIN" ? "/admin" : "/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Check your credentials.");
