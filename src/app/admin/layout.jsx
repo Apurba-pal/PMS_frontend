@@ -20,6 +20,8 @@ export default function AdminLayout({ children }) {
 
         setAllowed(true);
       } catch {
+        // If auth fails, clear the frontend session cookie to prevent infinite loops
+        document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         router.replace("/login");
       }
     };

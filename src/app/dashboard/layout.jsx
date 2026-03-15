@@ -33,6 +33,9 @@ export default function DashboardLayout({ children }) {
         }
         setAllowed(true);
       } catch {
+        // If auth fails (e.g. backend cookie missing/expired), we MUST clear the
+        // frontend session cookie, otherwise middleware creates an infinite loop.
+        document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         router.replace("/login");
       }
     };
