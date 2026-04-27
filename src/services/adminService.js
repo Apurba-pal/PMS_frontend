@@ -27,3 +27,7 @@ export const getAllPlayers = () =>
 // Toggle DISABLED ↔ UNVERIFIED
 export const togglePlayerDisable = (userId) =>
   api.patch(`/admin/players/${userId}/disable`);
+
+// Promote a player to ADMIN (player must have no squad)
+export const promoteToAdmin = (userId) =>
+  api.patch(`/admin/players/${userId}/promote`);
